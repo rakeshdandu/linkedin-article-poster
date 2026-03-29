@@ -1,11 +1,9 @@
 // Temporary debug endpoint — DELETE after fixing
+// Call this from admin panel JS, not directly in browser
 exports.handler = async (event, context) => {
   const siteUrl = process.env.URL;
-  const results = {};
-
-  // Forward the admin user's own bearer token to GoTrue admin API
-  // Netlify's custom GoTrue may accept admin user JWTs for admin endpoints
   const incomingAuth = event.headers.authorization || event.headers.Authorization || '';
+  const results = { incomingAuthPresent: !!incomingAuth, incomingAuthPrefix: incomingAuth.substring(0, 20) };
 
   try {
     const r = await fetch(`${siteUrl}/.netlify/identity/admin/users`, {

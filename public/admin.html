@@ -139,6 +139,12 @@
     <div class="msg" id="deleteMsg"></div>
   </div>
 
+  <!-- DEBUG — remove after fixing -->
+  <div class="card">
+    <button class="btn btn-primary" onclick="testGoTrue()">Debug: Test GoTrue Admin API</button>
+    <pre id="debugOut" style="margin-top:1rem;font-size:0.75rem;white-space:pre-wrap;"></pre>
+  </div>
+
   <!-- Global Settings -->
   <div class="card">
     <div class="section-title">Global Settings</div>
@@ -275,6 +281,13 @@
     if (!res.ok) { showMsg('deleteMsg', data.error || 'Failed to delete user.', 'err'); return; }
     showMsg('deleteMsg', `✓ ${email} deleted.`, 'ok');
     loadUsers();
+  }
+
+  // ── DEBUG ──
+  async function testGoTrue() {
+    const res = await fetch('/api/debug-info', { headers: authHeaders() });
+    const data = await res.json();
+    document.getElementById('debugOut').textContent = JSON.stringify(data, null, 2);
   }
 
   // ── SETTINGS (placeholder for Phase 2) ──
