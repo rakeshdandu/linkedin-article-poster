@@ -1,6 +1,6 @@
 // DELETE /api/delete-user — admin only
 // Body: { userId }
-const { requireAdmin, netlifyApiHeaders, identityUrl } = require('./_admin-auth');
+const { requireAdmin } = require('./_admin-auth');
 
 exports.handler = async (event, context) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -16,9 +16,12 @@ exports.handler = async (event, context) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'You cannot delete your own account' }) };
   }
 
-  const res = await fetch(`${identityUrl()}/users/${userId}`, {
+  const siteUrl = process.env.URL;
+  const incomingAuth = event.headers.authorization || event.headers.Authorization || '';
+
+  const res = await fetch(`${siteUrl}/.netlify/identity/admin/users/${userId}`, {
     method: 'DELETE',
-    headers: netlifyApiHeaders(),
+    headers: { Authorization: incomingAuth },
   });
 
   if (!res.ok) {

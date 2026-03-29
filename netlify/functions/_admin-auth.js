@@ -14,7 +14,7 @@ function requireAdmin(context) {
 
   // Fallback: check JWT claims
   const appMeta = user.app_metadata || {};
-  const roles = [...(appMeta.roles || []), ...(appMeta.authorization?.roles || [])];
+  const roles = [...(appMeta.roles || []), ...(appMeta.authorization?.roles || [])].map(r => r.toLowerCase());
   if (!roles.includes('admin')) return { error: 'Admin access required', status: 403 };
   return { user };
 }

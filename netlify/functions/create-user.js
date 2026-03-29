@@ -1,6 +1,6 @@
 // POST /api/create-user — admin only
 // Body: { email, password, fullName, role }
-const { requireAdmin, netlifyApiHeaders, identityUrl } = require('./_admin-auth');
+const { requireAdmin } = require('./_admin-auth');
 
 exports.handler = async (event, context) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -13,15 +13,18 @@ exports.handler = async (event, context) => {
   if (!email || !password) return { statusCode: 400, headers, body: JSON.stringify({ error: 'email and password are required' }) };
   if (!['user', 'admin'].includes(role)) return { statusCode: 400, headers, body: JSON.stringify({ error: 'role must be user or admin' }) };
 
-  const res = await fetch(`${identityUrl()}/users`, {
+  const siteUrl = process.env.URL;
+  const incomingAuth = event.headers.authorization || event.headers.Authorization || '';
+
+  const res = await fetch(`${siteUrl}/.netlify/identity/admin/users`, {
     method: 'POST',
-    headers: netlifyApiHeaders(),
+    headers: { Authorization: incomingAuth, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email,
       password,
       confirm: true,
-      user_metadata:  { full_name: fullName || email.split('@')[0] },
-      app_metadata:   { roles: [role] },
+      user_metadata: { full_name: fullName || email.split('@')[0] },
+      app_metadata: { roles: [role] },
     }),
   });
 
