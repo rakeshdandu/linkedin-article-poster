@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LAP — LinkedIn Article Poster</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0f0f0f; --paper: #f5f0e8; --cream: #ede8db;
+      --gold: #c9a84c; --gold-light: #e8d5a3; --red: #c0392b;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+    /* ── LOADING ── */
+    #loadingScreen {
+      position: fixed; inset: 0; background: var(--paper);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; z-index: 50;
+    }
+    .loading-logo { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; }
+    .loading-logo span { color: var(--gold); }
+    .loading-spinner {
+      width: 32px; height: 32px; border: 3px solid rgba(201,168,76,0.3);
+      border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--gold-light);
+      background: rgba(245,240,232,0.95); backdrop-filter: blur(8px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon {
+      width: 36px; height: 36px; background: var(--ink); border-radius: 6px;
+      display: grid; place-items: center; color: var(--gold);
+      font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1rem;
+    }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+    .logo-text span { color: var(--gold); }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .user-badge {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: #555;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--ink); color: var(--gold);
+      display: grid; place-items: center;
+      font-family: 'Playfair Display', serif; font-weight: 700; font-size: 0.85rem;
+    }
+    .role-tag {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 0.2rem 0.5rem;
+      border-radius: 100px; background: rgba(201,168,76,0.15); color: var(--gold);
+    }
+    .btn-sm {
+      padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+      border: 1.5px solid #e5e0d5; background: var(--paper); color: #555;
+    }
+    .btn-sm:hover { border-color: var(--gold); color: var(--ink); }
+    .btn-sm.primary { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+    .btn-sm.primary:hover { background: #1a1a1a; }
+
+    /* ── HERO ── */
+    .hero { text-align: center; padding: 4rem 2rem 2rem; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem,4vw,3.2rem); font-weight: 900; line-height: 1.15; }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+    .hero p { margin-top: 0.75rem; color: #666; font-size: 1rem; font-weight: 300; }
+
+    /* ── DASHBOARD CARDS ── */
+    .dashboard {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem; max-width: 1100px; margin: 2rem auto 4rem; padding: 0 2rem;
+    }
+    .dash-card {
+      background: white; border-radius: 16px; padding: 1.75rem;
+      border: 1px solid rgba(201,168,76,0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      display: flex; flex-direction: column; gap: 0.75rem;
+      cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit;
+    }
+    .dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-color: var(--gold-light); }
+    .dash-card-icon { font-size: 2rem; }
+    .dash-card-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; }
+    .dash-card-desc { font-size: 0.82rem; color: #777; line-height: 1.5; }
+    .dash-card-badge {
+      align-self: flex-start; margin-top: auto;
+      padding: 0.25rem 0.65rem; border-radius: 100px;
+      font-size: 0.72rem; font-weight: 600;
+      background: rgba(201,168,76,0.12); color: var(--gold);
+    }
+    .dash-card.admin-only { border-color: rgba(201,168,76,0.3); background: linear-gradient(135deg,white,rgba(201,168,76,0.04)); }
+
+    /* ── COMING SOON TAG ── */
+    .coming-soon { opacity: 0.5; cursor: default; }
+    .coming-soon:hover { transform: none; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loadingScreen">
+  <div class="loading-logo">Linked<span>Craft</span></div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- App (shown after auth) -->
+<div id="app" style="display:none;">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">LAP</div>
+      <div class="logo-text">LinkedIn<span> Article Poster</span></div>
+    </div>
+    <div class="header-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div>
+          <div id="userName" style="font-weight:500;"></div>
+          <div id="userEmail" style="font-size:0.72rem;color:#999;"></div>
+        </div>
+        <span class="role-tag" id="roleTag"></span>
+      </div>
+      <button class="btn-sm" onclick="netlifyIdentity.logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>Welcome to <em>LAP</em></h1>
+    <p id="heroSub">Your LinkedIn posts, formatted and scheduled automatically.</p>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <!-- Cards injected by JS based on role -->
+  </div>
+</div>
+
+<script>
+  const ALL_CARDS = [
+    {
+      icon: '📝', title: 'Format a Post', desc: 'Paste or upload a Word doc, format it for LinkedIn with AI-powered emojis, hashtags, and analysis.',
+      href: 'formatter.html', badge: 'LinkedCraft', adminOnly: false, ready: true,
+    },
+    {
+      icon: '📬', title: 'Review & Approve', desc: 'See all your staged posts, make edits, approve or reject, and set schedule dates.',
+      href: 'review.html', badge: 'Coming Phase 3', adminOnly: false, ready: false,
+    },
+    {
+      icon: '📅', title: 'Schedule', desc: 'View your post calendar, see pending and posted items, track LinkedIn URLs.',
+      href: 'schedule.html', badge: 'Coming Phase 4', adminOnly: false, ready: false,
+    },
+    {
+      icon: '🔗', title: 'Connect LinkedIn', desc: 'Connect your personal LinkedIn account so posts can be published automatically.',
+      href: 'linkedin-auth.html', badge: 'Coming Phase 5', adminOnly: false, ready: false,
+    },
+    {
+      icon: '⚙️', title: 'Admin Panel', desc: 'Manage users, set the shared Claude API key, view all users\' post status and scheduler logs.',
+      href: 'admin.html', badge: 'Admin Only', adminOnly: true, ready: true,
+    },
+  ];
+
+  let currentUser = null;
+
+  netlifyIdentity.on('init', user => {
+    // Always hide loading screen first so Identity modal is never blocked
+    document.getElementById('loadingScreen').style.display = 'none';
+
+    if (!user) {
+      netlifyIdentity.open('login');
+    } else {
+      onLoggedIn(user);
+    }
+  });
+
+  netlifyIdentity.on('login', user => {
+    netlifyIdentity.close();
+    onLoggedIn(user);
+  });
+
+  netlifyIdentity.on('logout', () => {
+    currentUser = null;
+    document.getElementById('app').style.display = 'none';
+    netlifyIdentity.open('login');
+  });
+
+  async function onLoggedIn(identityUser) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    // DEBUG — remove after fixing
+    try {
+      const t = await identityUser.jwt(true);
+      const p = JSON.parse(atob(t.split('.')[1]));
+      console.log('JWT payload:', JSON.stringify(p, null, 2));
+      console.log('Identity user:', JSON.stringify(identityUser, null, 2));
+      document.title = 'role:' + (p.app_metadata?.roles || p.app_metadata?.authorization?.roles || 'none');
+    } catch(e) { console.log('debug error', e); }
+    // END DEBUG
+    try {
+      // Force fresh JWT so updated roles are included
+      const freshToken = await identityUser.jwt(true);
+      const res = await fetch('/api/me', {
+        headers: { Authorization: `Bearer ${freshToken}` }
+      });
+      currentUser = await res.json();
+    } catch(err) {
+      // Fallback: decode role directly from fresh JWT payload
+      try {
+        const freshToken = await identityUser.jwt(true);
+        const payload = JSON.parse(atob(freshToken.split('.')[1]));
+        const roles = [
+          ...(payload.app_metadata?.roles || []),
+          ...(payload.app_metadata?.authorization?.roles || []),
+        ];
+        currentUser = {
+          id: identityUser.id,
+          email: identityUser.email,
+          name: identityUser.user_metadata?.full_name || identityUser.email.split('@')[0],
+          role: roles.includes('admin') ? 'admin' : 'user',
+        };
+      } catch {
+        currentUser = {
+          id: identityUser.id,
+          email: identityUser.email,
+          name: identityUser.user_metadata?.full_name || identityUser.email.split('@')[0],
+          role: 'user',
+        };
+      }
+    }
+    renderApp();
+  }
+
+  function renderApp() {
+    const { name, email, role } = currentUser;
+    const initials = name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase() || name[0].toUpperCase();
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('roleTag').textContent = role;
+    document.getElementById('heroSub').textContent = role === 'admin'
+      ? 'Manage users, monitor posts, and keep everything running smoothly.'
+      : 'Your LinkedIn posts, formatted and scheduled automatically.';
+
+    const cards = ALL_CARDS.filter(c => !c.adminOnly || role === 'admin');
+    document.getElementById('dashboard').innerHTML = cards.map(c => `
+      <a class="dash-card ${c.adminOnly ? 'admin-only' : ''} ${!c.ready ? 'coming-soon' : ''}"
+         href="${c.ready ? c.href : '#'}" ${c.ready ? '' : 'onclick="return false"'}>
+        <div class="dash-card-icon">${c.icon}</div>
+        <div class="dash-card-title">${c.title}</div>
+        <div class="dash-card-desc">${c.desc}</div>
+        <div class="dash-card-badge">${c.badge}</div>
+      </a>`).join('');
+
+    document.getElementById('app').style.display = 'block';
+  }
+</script>
+</body>
+</html>

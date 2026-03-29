@@ -1,0 +1,10 @@
+{
+  "name": "linkedin-article-poster",
+  "version": "1.0.0",
+  "description": "LAP — Multi-user LinkedIn post scheduler",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@netlify/blobs": "^7.0.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

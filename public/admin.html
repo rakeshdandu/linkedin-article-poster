@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — LAP</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --ink:#0f0f0f; --paper:#f5f0e8; --cream:#ede8db; --gold:#c9a84c; --gold-light:#e8d5a3; --red:#c0392b; }
+    body { font-family:'DM Sans',sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; }
+
+    header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1.25rem 2.5rem; border-bottom:1px solid var(--gold-light);
+      background:rgba(245,240,232,0.95); backdrop-filter:blur(8px);
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:0.75rem; text-decoration:none; color:inherit; }
+    .logo-icon { width:36px;height:36px;background:var(--ink);border-radius:6px;display:grid;place-items:center;color:var(--gold);font-family:'Playfair Display',serif;font-weight:900;font-size:1rem; }
+    .logo-text { font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700; }
+    .logo-text span { color:var(--gold); }
+    .admin-tag { font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.3rem 0.75rem;border-radius:100px;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold-light); }
+
+    .page { max-width:960px;margin:2.5rem auto;padding:0 2rem; display:flex;flex-direction:column;gap:2rem; }
+
+    .section-title { font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;margin-bottom:1rem; }
+
+    /* ── CARD ── */
+    .card { background:white;border-radius:16px;padding:1.75rem;border:1px solid rgba(201,168,76,0.15);box-shadow:0 4px 20px rgba(0,0,0,0.07); }
+
+    /* ── FORM ── */
+    .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem; }
+    @media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+    .field { display:flex;flex-direction:column;gap:0.35rem; }
+    .field label { font-size:0.78rem;font-weight:600;color:#555;letter-spacing:0.03em; }
+    .field input, .field select {
+      padding:0.55rem 0.85rem;border:1.5px solid #e5e0d5;border-radius:8px;
+      background:var(--paper);font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--ink);
+      transition:border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { outline:none;border-color:var(--gold); }
+    .form-actions { display:flex;gap:0.75rem;margin-top:0.5rem; }
+    .btn { padding:0.6rem 1.25rem;border-radius:9px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;border:none; }
+    .btn-primary { background:var(--ink);color:var(--gold); }
+    .btn-primary:hover { background:#1a1a1a;transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+    .btn-danger { background:#fdf0ef;color:var(--red);border:1.5px solid #f5c6c6; }
+    .btn-danger:hover { background:var(--red);color:white; }
+
+    /* ── MESSAGE ── */
+    .msg { font-size:0.82rem;padding:0.55rem 0.85rem;border-radius:8px;display:none; }
+    .msg.ok  { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+    .msg.err { background:#fdf0ef;color:var(--red);border:1px solid #f5c6c6; }
+
+    /* ── USER TABLE ── */
+    .user-table { width:100%;border-collapse:collapse;font-size:0.85rem; }
+    .user-table th { text-align:left;padding:0.5rem 0.75rem;font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#999;border-bottom:2px solid var(--cream); }
+    .user-table td { padding:0.75rem;border-bottom:1px solid var(--cream);vertical-align:middle; }
+    .user-table tr:last-child td { border-bottom:none; }
+    .user-table tr:hover td { background:#faf8f3; }
+    .role-pill { display:inline-block;padding:0.2rem 0.55rem;border-radius:100px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em; }
+    .role-pill.admin { background:rgba(201,168,76,0.15);color:#92650a; }
+    .role-pill.user  { background:#f0f9ff;color:#0369a1; }
+    .status-dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px; }
+    .status-dot.confirmed { background:#16a34a; }
+    .status-dot.pending   { background:#e67e22; }
+    .empty-state { text-align:center;padding:2.5rem;color:#aaa;font-size:0.9rem; }
+
+    /* ── SETTINGS ── */
+    .settings-row { display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--cream); }
+    .settings-row:last-child { border-bottom:none; }
+    .settings-label { flex:1; }
+    .settings-label strong { display:block;font-size:0.88rem;font-weight:600;margin-bottom:0.15rem; }
+    .settings-label span { font-size:0.78rem;color:#888; }
+    .settings-input { flex:2;max-width:340px; }
+    .settings-input input { width:100%;padding:0.5rem 0.75rem;border:1.5px solid #e5e0d5;border-radius:8px;background:var(--paper);font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--ink); }
+    .settings-input input:focus { outline:none;border-color:var(--gold); }
+
+    .spinner { width:16px;height:16px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">LAP</div>
+    <div class="logo-text">LinkedIn<span> Article Poster</span></div>
+  </a>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <a href="index.html" style="font-size:0.82rem;color:#777;text-decoration:none;padding:0.35rem 0.8rem;border:1.5px solid #e5e0d5;border-radius:8px;transition:all 0.15s;" onmouseover="this.style.borderColor='#c9a84c';this.style.color='#0f0f0f'" onmouseout="this.style.borderColor='#e5e0d5';this.style.color='#777'">← Home</a>
+    <span class="admin-tag">Admin Panel</span>
+  </div>
+</header>
+
+<div class="page" id="page" style="display:none;">
+
+  <!-- Create User -->
+  <div class="card">
+    <div class="section-title">Create User</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="newName" placeholder="Jane Smith"/>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="newEmail" placeholder="jane@example.com"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="newPass" placeholder="Min 8 characters"/>
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="newRole">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:1rem;">
+      <button class="btn btn-primary" id="createBtn" onclick="createUser()">Create User</button>
+    </div>
+    <div class="msg" id="createMsg"></div>
+  </div>
+
+  <!-- User List -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="section-title" style="margin-bottom:0;">All Users</div>
+      <button class="btn btn-primary" onclick="loadUsers()" style="padding:0.45rem 0.9rem;font-size:0.78rem;">↻ Refresh</button>
+    </div>
+    <div id="userTableWrap">
+      <div class="empty-state">Loading users…</div>
+    </div>
+    <div class="msg" id="deleteMsg"></div>
+  </div>
+
+  <!-- Global Settings -->
+  <div class="card">
+    <div class="section-title">Global Settings</div>
+    <div class="settings-row">
+      <div class="settings-label">
+        <strong>Shared Claude API Key</strong>
+        <span>Used by all users unless they set their own key.</span>
+      </div>
+      <div class="settings-input">
+        <input type="password" id="sharedApiKey" placeholder="sk-ant-…"/>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:1rem;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div class="msg" id="settingsMsg"></div>
+  </div>
+
+</div>
+
+<script>
+  let token = null;
+  let currentUserId = null;
+
+  netlifyIdentity.on('init', user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    checkAdmin(user);
+  });
+  netlifyIdentity.on('login', user => checkAdmin(user));
+  netlifyIdentity.on('logout', () => { window.location.href = 'index.html'; });
+
+  async function checkAdmin(user) {
+    const freshToken = await user.jwt(true);
+    token = freshToken;
+    currentUserId = user.id;
+    // Use /api/me which checks ADMIN_EMAILS (not stale JWT roles)
+    try {
+      const res = await fetch('/api/me', { headers: { Authorization: `Bearer ${freshToken}` } });
+      const data = await res.json();
+      if (data.role !== 'admin') { window.location.href = 'index.html'; return; }
+    } catch {
+      window.location.href = 'index.html'; return;
+    }
+    document.getElementById('page').style.display = 'flex';
+    loadUsers();
+  }
+
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text; el.className = `msg ${type}`; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  // ── CREATE USER ──
+  async function createUser() {
+    const btn = document.getElementById('createBtn');
+    const name  = document.getElementById('newName').value.trim();
+    const email = document.getElementById('newEmail').value.trim();
+    const pass  = document.getElementById('newPass').value;
+    const role  = document.getElementById('newRole').value;
+
+    if (!email || !pass) { showMsg('createMsg','Email and password are required.','err'); return; }
+    if (pass.length < 8)  { showMsg('createMsg','Password must be at least 8 characters.','err'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Creating…';
+
+    const res = await fetch('/api/create-user', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, password: pass, fullName: name, role }),
+    });
+    const data = await res.json();
+    btn.disabled = false; btn.textContent = 'Create User';
+
+    if (!res.ok) { showMsg('createMsg', data.error || 'Failed to create user.', 'err'); return; }
+    showMsg('createMsg', `✓ User ${data.email} created successfully.`, 'ok');
+    document.getElementById('newName').value = '';
+    document.getElementById('newEmail').value = '';
+    document.getElementById('newPass').value = '';
+    loadUsers();
+  }
+
+  // ── LOAD USERS ──
+  async function loadUsers() {
+    document.getElementById('userTableWrap').innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading…</div>';
+    const res = await fetch('/api/list-users', { headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('userTableWrap').innerHTML = `<div class="empty-state">Error: ${data.error}</div>`; return; }
+
+    if (!data.users?.length) {
+      document.getElementById('userTableWrap').innerHTML = '<div class="empty-state">No users yet.</div>';
+      return;
+    }
+
+    const rows = data.users.map(u => `
+      <tr>
+        <td><strong>${u.name}</strong></td>
+        <td style="color:#666;">${u.email}</td>
+        <td><span class="role-pill ${u.role}">${u.role}</span></td>
+        <td>
+          <span class="status-dot ${u.confirmed ? 'confirmed' : 'pending'}"></span>
+          ${u.confirmed ? 'Active' : 'Pending'}
+        </td>
+        <td style="color:#aaa;font-size:0.78rem;">${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}</td>
+        <td>
+          ${u.id !== currentUserId
+            ? `<button class="btn btn-danger" style="padding:0.3rem 0.65rem;font-size:0.75rem;" onclick="deleteUser('${u.id}','${u.email}')">Delete</button>`
+            : '<span style="font-size:0.75rem;color:#ccc;">You</span>'
+          }
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('userTableWrap').innerHTML = `
+      <table class="user-table">
+        <thead><tr>
+          <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── DELETE USER ──
+  async function deleteUser(id, email) {
+    if (!confirm(`Delete user ${email}? This cannot be undone.`)) return;
+    const res = await fetch('/api/delete-user', {
+      method: 'DELETE', headers: authHeaders(),
+      body: JSON.stringify({ userId: id }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg('deleteMsg', data.error || 'Failed to delete user.', 'err'); return; }
+    showMsg('deleteMsg', `✓ ${email} deleted.`, 'ok');
+    loadUsers();
+  }
+
+  // ── SETTINGS (placeholder for Phase 2) ──
+  async function saveSettings() {
+    showMsg('settingsMsg', '✓ Settings saved. (Full settings integration coming in Phase 2)', 'ok');
+  }
+</script>
+</body>
+</html>
